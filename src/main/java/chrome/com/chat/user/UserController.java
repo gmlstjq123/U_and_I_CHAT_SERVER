@@ -90,4 +90,19 @@ public class UserController {
             return new BaseResponse<>(exception.getStatus());
         }
     }
+
+    /**
+     * 유저 탈퇴
+     */
+    @DeleteMapping("")
+    public BaseResponse<String> deleteUser(@RequestParam String agreement){
+        // 비밀번호를 입력받아 회원 삭제를 처리하는 로직의 경우, 소셜 로그인 유저에 적용하기 어려움.
+        // "계정 삭제에 동의합니다"라는 문구를 입력받는 것(띄어쓰기까지 정확히 일치)으로 회원 삭제를 처리하기로 함.
+        try{
+            Long userId = jwtService.getUserIdx();
+            return new BaseResponse<>(userService.deleteUser(userId, agreement));
+        } catch(BaseException exception){
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
 }

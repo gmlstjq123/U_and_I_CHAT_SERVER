@@ -21,7 +21,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @EnableTransactionManagement
 @RequiredArgsConstructor
@@ -101,6 +103,9 @@ public class UserService {
         }
     }
 
+    /**
+     * 유저 정보 반환
+     */
     public GetUserRes getUserInfo(String uid) throws BaseException {
         User user = utilService.findByUserUidWithValidation(uid);
 
@@ -189,5 +194,25 @@ public class UserService {
         } catch (BaseException exception) {
             throw new BaseException(exception.getStatus());
         }
+    }
+
+    /**
+     *  유저 탈퇴
+     */
+    @Transactional
+    public String deleteUser(Long userId, String agreement) throws BaseException{
+        if(!agreement.equals("계정 삭제에 동의합니다")) {
+            throw new BaseException(BaseResponseStatus.AGREEMENT_MISMATCH);
+        }
+        User user = utilService.findByUserIdWithValidation(userId);
+        tokenRepository.deleteTokenByUserId(userId);
+        Profile profile = profileRepository.findProfileById(userId).orElse(null);
+        if(profile != null) {
+            profileService.deleteProfile(profile);
+            profileRepository.deleteProfileById(userId);
+        }
+        userRepository.deleteUser(userId);
+        String result = "요청하신 회원에 대한 삭제가 완료되었습니다.";
+        return result;
     }
 }

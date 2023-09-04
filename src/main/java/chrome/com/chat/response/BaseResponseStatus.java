@@ -29,6 +29,7 @@ public enum BaseResponseStatus {
     LOG_OUT_USER(false,2019,"이미 로그아웃된 유저입니다."),
     NICKNAME_CANNOT_BE_NULL(false, 2020, "닉네임을 입력해주세요"),
     ALREADY_LOGIN(false, 2021, "이미 로그인된 유저입니다."),
+    AGREEMENT_MISMATCH(false, 2023, "동의 문구를 잘못 입력하셨습니다."),
 
     /**
      * 3000 : Response 오류
