@@ -1,6 +1,7 @@
 package chrome.com.chat.user;
 
 import chrome.com.chat.jwt.JwtProvider;
+import chrome.com.chat.jwt.JwtService;
 import chrome.com.chat.jwt.Token;
 import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.jwt.dto.JwtResponseDto;
@@ -11,19 +12,19 @@ import chrome.com.chat.user.profile.Profile;
 import chrome.com.chat.user.profile.ProfileRepository;
 import chrome.com.chat.user.profile.ProfileService;
 import chrome.com.chat.user.profile.dto.GetS3Res;
-import chrome.com.chat.utils.AES128;
-import chrome.com.chat.utils.S3Service;
-import chrome.com.chat.utils.Secret;
-import chrome.com.chat.utils.UtilService;
+import chrome.com.chat.utils.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @EnableTransactionManagement
 @RequiredArgsConstructor
@@ -34,9 +35,11 @@ public class UserService {
     private final UtilService utilService;
     private final TokenRepository tokenRepository;
     private final JwtProvider jwtProvider;
+    private final JwtService jwtService;
     private final ProfileRepository profileRepository;
     private final ProfileService profileService;
     private final S3Service s3Service;
+    private final RedisTemplate redisTemplate;
 
     /**
      * 유저 생성 후 DB에 저장(회원 가입) with JWT
@@ -100,6 +103,45 @@ public class UserService {
             return new PostLoginRes(user, token);
         } else {
             throw new BaseException(BaseResponseStatus.PASSWORD_NOT_MATCH);
+        }
+    }
+
+    /**
+     * 로그아웃
+     */
+    @Transactional
+    public String logout(Long userId) throws BaseException {
+        try {
+            if (userId == 0L) { // 로그아웃 요청은 access token이 만료되더라도 재발급할 필요가 없음.
+                User user = tokenRepository.findUserByAccessToken(jwtService.getJwt()).orElse(null);
+                if (user != null) {
+                    Token token = tokenRepository.findTokenByUserId(user.getId()).orElse(null);
+                    tokenRepository.deleteTokenByAccessToken(token.getAccessToken());
+                    return "로그아웃 되었습니다.";
+                }
+
+                else {
+                    throw new BaseException(BaseResponseStatus.INVALID_JWT);
+                }
+            }
+
+            else { // 토큰이 만료되지 않은 경우
+                User logoutUser = utilService.findByUserIdWithValidation(userId);
+                Token token = utilService.findTokenByUserIdWithValidation(logoutUser.getId());
+                String accessToken = token.getAccessToken();
+
+                //엑세스 토큰 남은 유효시간
+                Long expiration = jwtProvider.getExpiration(accessToken);
+
+                //Redis Cache에 저장
+                redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+
+                //리프레쉬 토큰 삭제
+                tokenRepository.deleteTokenByUserId(logoutUser.getId());
+                return "로그아웃 되었습니다.";
+            }
+        } catch (Exception e) {
+            throw new BaseException(BaseResponseStatus.FAILED_TO_LOGOUT);
         }
     }
 
@@ -197,11 +239,29 @@ public class UserService {
     }
 
     /**
+     * 모든 유저의 닉네임과 프로필 사진 반환
+     */
+    public List<GetUserRes> getUsers(Long userId) {
+        utilService.findByUserIdWithValidation(userId);
+        List<User> users = userRepository.findUserByIdWithoutMe(userId);
+
+        List<GetUserRes> getUserResList = users.stream()
+                .map(user -> {
+                    String profileUrl = (user.getProfile() != null) ? user.getProfile().getProfileUrl() : null;
+                    return new GetUserRes(profileUrl, user.getNickName());
+                })
+                .sorted(Comparator.comparing(GetUserRes::getNickName))
+                .collect(Collectors.toList());
+
+        return getUserResList;
+    }
+
+    /**
      *  유저 탈퇴
      */
     @Transactional
     public String deleteUser(Long userId, String agreement) throws BaseException{
-        if(!agreement.equals("계정 삭제에 동의합니다")) {
+        if(!agreement.equals("I agree")) {
             throw new BaseException(BaseResponseStatus.AGREEMENT_MISMATCH);
         }
         User user = utilService.findByUserIdWithValidation(userId);

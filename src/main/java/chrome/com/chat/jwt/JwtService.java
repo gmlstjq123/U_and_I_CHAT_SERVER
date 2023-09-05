@@ -82,6 +82,39 @@ public class JwtService {
     }
 
     /**
+     * 로그아웃 전용 userId 추출 메서드
+     */
+    // 로그아웃을 시도할 때는 accsee token과 refresh 토큰이 만료되었어도
+    // 형식만 유효하다면 토큰 재발급 없이 로그아웃 할 수 있어야 함.
+    public Long getLogoutUserIdx() throws BaseException {
+
+        // 1. JWT 추출
+        String accessToken = getJwt();
+        if (accessToken == null || accessToken.length() == 0) {
+            throw new BaseException(BaseResponseStatus.EMPTY_JWT);
+        }
+        if (checkBlackToken(accessToken)) {
+            throw new BaseException(BaseResponseStatus.LOG_OUT_USER);
+        }
+        try {
+            // 2. JWT parsing
+            Jws<Claims> claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(accessToken);
+            // 3. userId 추출
+            return claims.getBody().get("userId", Long.class);
+        } catch (ExpiredJwtException e) {
+            // access token이 만료된 경우
+            return 0L;
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            throw new BaseException(BaseResponseStatus.INVALID_JWT);
+        } catch (Exception ignored) {
+            throw new BaseException(BaseResponseStatus.INVALID_JWT);
+        }
+    }
+
+    /**
      * 액세스 토큰 재발급
      */
     private String refreshAccessToken(User user, String refreshToken) throws BaseException {

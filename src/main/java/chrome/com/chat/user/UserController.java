@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/users")
@@ -35,6 +37,19 @@ public class UserController {
     public BaseResponse<PostLoginRes> loginUser(@RequestBody PostLoginReq postLoginReq) {
         try {
             return new BaseResponse<>(userService.login(postLoginReq));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
+     * 로그아웃
+     */
+    @PostMapping("/log-out") // Redis가 켜져있어야 동작한다.
+    public BaseResponse<String> logoutUser() {
+        try {
+            Long userId = jwtService.getLogoutUserIdx(); // 토큰 만료 상황에서 로그아웃을 시도하면 0L을 반환
+            return new BaseResponse<>(userService.logout(userId));
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }
@@ -86,6 +101,19 @@ public class UserController {
         try {
             Long userId = jwtService.getUserIdx();
             return new BaseResponse<>(userService.modifyProfile(userId, multipartFile));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
+     * 모든 유저의 닉네임과 프로필 사진 반환
+     */
+    @GetMapping("list-up")
+    public BaseResponse<List<GetUserRes>> getUsers() {
+        try {
+            Long userId = jwtService.getUserIdx();
+            return new BaseResponse<>(userService.getUsers(userId));
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }

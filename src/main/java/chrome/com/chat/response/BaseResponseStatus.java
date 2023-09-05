@@ -37,6 +37,7 @@ public enum BaseResponseStatus {
     // Common
     RESPONSE_ERROR(false, 3000, "값을 불러오는데 실패하였습니다."),
     PASSWORD_NOT_MATCH(false,3014,"비밀번호가 틀렸습니다."),
+    FAILED_TO_LOGOUT(false, 3015, "로그아웃에 실패하였습니다"),
 
 
     /**
