@@ -1,14 +1,15 @@
-package chrome.com.chat.user.dto;
+package chrome.com.chat.chat_room.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-public class GetUserRes {
+public class AddUserReq {
     private String uid;
-    private String imgUrl;
-    private String nickName;
+    private String roomId;
 }

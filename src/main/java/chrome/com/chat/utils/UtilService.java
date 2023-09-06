@@ -1,5 +1,7 @@
 package chrome.com.chat.utils;
 
+import chrome.com.chat.chat_room.ChatRoom;
+import chrome.com.chat.chat_room.ChatRoomRepository;
 import chrome.com.chat.jwt.Token;
 import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.response.BaseException;
@@ -9,6 +11,8 @@ import chrome.com.chat.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+
 import static chrome.com.chat.response.BaseResponseStatus.*;
 
 @Service
@@ -17,6 +21,7 @@ public class UtilService {
 
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public User findByUserIdWithValidation(Long userId) throws BaseException {
         return userRepository.findUserById(userId)
@@ -36,5 +41,20 @@ public class UtilService {
     public Token findTokenByUserIdWithValidation(Long userId) throws BaseException {
         return tokenRepository.findTokenByUserId(userId)
                 .orElseThrow(() -> new BaseException(INVALID_JWT));
+    }
+
+    public ChatRoom findChatRoomByChatRoomIdWithValidation(String chatRoomId) throws BaseException {
+        return chatRoomRepository.findChatRoomById(chatRoomId)
+                .orElseThrow(() -> new BaseException(NONE_EXIST_ROOM));
+    }
+
+    public static String formatTime(LocalTime time) {
+        int hour = time.getHour();
+        int min = time.getMinute();
+        String meridiem = (hour >= 12) ? "오후" : "오전";
+        if (hour >= 12) {
+            hour -= 12;
+        }
+        return meridiem + " " + hour + ":" + String.format("%02d", min);
     }
 }

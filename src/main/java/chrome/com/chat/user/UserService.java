@@ -150,11 +150,10 @@ public class UserService {
      */
     public GetUserRes getUserInfo(String uid) throws BaseException {
         User user = utilService.findByUserUidWithValidation(uid);
-
         String profileUrl = (user.getProfile() != null) ? user.getProfile().getProfileUrl() : null;
         String nickName = user.getNickName();
 
-        return new GetUserRes(profileUrl, nickName);
+        return new GetUserRes(uid, profileUrl, nickName);
     }
 
     /**
@@ -248,7 +247,7 @@ public class UserService {
         List<GetUserRes> getUserResList = users.stream()
                 .map(user -> {
                     String profileUrl = (user.getProfile() != null) ? user.getProfile().getProfileUrl() : null;
-                    return new GetUserRes(profileUrl, user.getNickName());
+                    return new GetUserRes(user.getUid(), profileUrl, user.getNickName());
                 })
                 .sorted(Comparator.comparing(GetUserRes::getNickName))
                 .collect(Collectors.toList());
