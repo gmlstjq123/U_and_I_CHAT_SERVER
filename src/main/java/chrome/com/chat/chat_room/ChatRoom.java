@@ -1,6 +1,5 @@
 package chrome.com.chat.chat_room;
 
-import chrome.com.chat.text_message.TextMessage;
 import chrome.com.chat.user_chat_room.UserChatRoom;
 import chrome.com.chat.utils.BaseTimeEntity;
 import lombok.*;

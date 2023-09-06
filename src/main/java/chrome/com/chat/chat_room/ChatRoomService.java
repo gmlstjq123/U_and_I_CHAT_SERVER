@@ -4,10 +4,7 @@ import chrome.com.chat.chat_room.dto.GetChatRoomRes;
 import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponseStatus;
-import chrome.com.chat.text_message.TextMessage;
-import chrome.com.chat.text_message.TextMessageRepository;
 import chrome.com.chat.chat_room.dto.AddUserReq;
-import chrome.com.chat.text_message.dto.PostMessageReq;
 import chrome.com.chat.user.User;
 import chrome.com.chat.user.dto.GetUserRes;
 import chrome.com.chat.user_chat_room.UserChatRoom;
@@ -30,7 +27,6 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserChatRoomRepository userChatRoomRepository;
     private final TokenRepository tokenRepository;
-    private final TextMessageRepository textMessageRepository;
     private final UtilService utilService;
 
     @Transactional
@@ -130,7 +126,6 @@ public class ChatRoomService {
         ChatRoom chatRoom = utilService.findChatRoomByChatRoomIdWithValidation(roomId);
         if (chatRoom.getUserCount() == 0) { // 채팅방에 아무도 안 남게 되면 Repository에서 삭제
             userChatRoomRepository.deleteUserChatRoomsByRoomId(roomId);
-            textMessageRepository.deleteMessageByRoomId(roomId);
             chatRoomRepository.deleteChatRoomById(roomId);
         }
         // 만약 사진 업로드 기능을 추가한다면 S3에 올라간 파일도 삭제해주어야 함
