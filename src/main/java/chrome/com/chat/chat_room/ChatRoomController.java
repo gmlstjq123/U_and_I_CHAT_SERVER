@@ -56,9 +56,20 @@ public class ChatRoomController {
 
     // 친구 초대
     @PostMapping("/room/add")
-    public BaseResponse<String> AddUserTest(@RequestBody AddUserReq addUserReq) {
+    public BaseResponse<String> AddUser(@RequestBody AddUserReq addUserReq) {
         try {
             return new BaseResponse<>(chatRoomService.addUser(addUserReq));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    // 채팅방에 참여한 인원 수 반환
+    @GetMapping("/userCount/{roomId}")
+    public BaseResponse<String> getUserCount(@PathVariable String roomId) {
+        try {
+            return new BaseResponse<>(chatRoomService.getUserCount(roomId));
+
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }

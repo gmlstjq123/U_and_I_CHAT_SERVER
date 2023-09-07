@@ -107,6 +107,19 @@ public class UserController {
     }
 
     /**
+     * 기본 프로필 사진 적용
+     */
+    @PatchMapping("/noProfile")
+    public BaseResponse<String> modifyNoProfile() {
+        try {
+            Long userId = jwtService.getUserIdx();
+            return new BaseResponse<>(userService.modifyNoProfile(userId));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
      * 모든 유저의 닉네임과 프로필 사진 반환
      */
     @GetMapping("list-up")

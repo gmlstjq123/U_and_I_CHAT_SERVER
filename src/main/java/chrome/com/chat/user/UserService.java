@@ -238,6 +238,26 @@ public class UserService {
     }
 
     /**
+     *  기본 프로필 적용
+     */
+    @Transactional
+    public String modifyNoProfile(Long userId) throws BaseException {
+        try {
+            User user = utilService.findByUserIdWithValidation(userId);
+            Profile profile = profileRepository.findProfileById(userId).orElse(null);
+            if(profile != null) { // 프로필이 미등록된 사용자가 변경을 요청하는 경우
+                // 1. 버킷에서 삭제
+                profileService.deleteProfile(profile);
+                // 2. Profile Repository에서 삭제
+                profileService.deleteProfileById(userId);
+            }
+            return "기본 프로필이 적용됩니다.";
+        } catch (BaseException exception) {
+            throw new BaseException(exception.getStatus());
+        }
+    }
+
+    /**
      * 모든 유저의 닉네임과 프로필 사진 반환
      */
     public List<GetUserRes> getUsers(Long userId) {

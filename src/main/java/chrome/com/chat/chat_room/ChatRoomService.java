@@ -60,21 +60,6 @@ public class ChatRoomService {
         chatRoom.updateUserCount(chatRoom.getUserCount() - 1);
         chatRoomRepository.save(chatRoom);
     }
-
-    @Transactional
-    public void addUser(Long userId, String chatRoomId) throws BaseException {
-        ChatRoom chatRoom = utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
-        UserChatRoom userChatRoom = userChatRoomRepository.findUserChatRoomByUserIdWithRoomId(userId, chatRoomId).orElse(null);
-        if(userChatRoom != null) { // 이미 채팅방에 추가된 유저인 경우
-            throw new BaseException(BaseResponseStatus.ALREADY_EXIST_MEMBER);
-        }
-        User user = utilService.findByUserIdWithValidation(userId);
-        userChatRoom.setUser(user);
-        userChatRoom.setChatRoom(chatRoom);
-        userChatRoomRepository.save(userChatRoom);
-        plusUserCount(chatRoomId);
-    }
-
     public String getNickNameList(String chatRoomId) throws BaseException {
         utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
         List<UserChatRoom> userChatRooms = userChatRoomRepository.findUserChatRoomByRoomId(chatRoomId);
@@ -97,12 +82,17 @@ public class ChatRoomService {
                     String nickName = userChatRoom.getUser().getNickName();
                     String profileUrl = Optional.ofNullable(userChatRoom.getUser().getProfile())
                             .map(profile -> profile.getProfileUrl())
-                            .orElse(""); // 프로필 URL이 null일 경우 빈 문자열로 대체
+                            .orElse(null);
 
-                    return new GetUserRes(uid, nickName, profileUrl);
+                    return new GetUserRes(uid, profileUrl, nickName);
                 })
                 .collect(Collectors.toList());
         return getUserRes;
+    }
+
+    public String getUserCount(String chatRoomId) throws BaseException {
+        ChatRoom chatRoom = utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
+        return chatRoom.getUserCount().toString();
     }
 
     public List<GetChatRoomRes> getChatRoomListById(Long userId) {
@@ -139,8 +129,11 @@ public class ChatRoomService {
         try {
             ChatRoom chatRoom = utilService.findChatRoomByChatRoomIdWithValidation(addUserReq.getRoomId());
             User user = utilService.findByUserUidWithValidation(addUserReq.getUid());
-
-            UserChatRoom userChatRoom = UserChatRoom.builder()
+            UserChatRoom userChatRoom = userChatRoomRepository.findUserChatRoomByUserIdWithRoomId(user.getId(), chatRoom.getChatRoomId()).orElse(null);
+            if (userChatRoom != null) { // 이미 채팅방에 추가된 유저인 경우
+                throw new BaseException(BaseResponseStatus.ALREADY_EXIST_MEMBER);
+            }
+            userChatRoom = UserChatRoom.builder()
                     .user(user)
                     .chatRoom(chatRoom)
                     .build();
