@@ -15,7 +15,7 @@ import java.util.Date;
 @Slf4j
 @Component
 public class JwtProvider {
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60 * 1000L; //refreshToken 유효기간 3일
+    private static final long REFRESH_TOKEN_EXPIRE_TIME = 14 * 24 * 60 * 60 * 1000L; //refreshToken 유효기간 14일
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 12 * 60 * 60 * 1000L; //accessToken 유효기간 12시간
 
     private Key key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(Secret.JWT_SECRET_KEY));

@@ -1,9 +1,7 @@
 package chrome.com.chat.user;
 
 import chrome.com.chat.jwt.JwtProvider;
-import chrome.com.chat.jwt.JwtService;
 import chrome.com.chat.jwt.Token;
-import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.jwt.dto.JwtResponseDto;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponseStatus;
@@ -33,13 +31,10 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UtilService utilService;
-    private final TokenRepository tokenRepository;
     private final JwtProvider jwtProvider;
-    private final JwtService jwtService;
     private final ProfileRepository profileRepository;
     private final ProfileService profileService;
     private final S3Service s3Service;
-    private final RedisTemplate redisTemplate;
 
     /**
      * 유저 생성 후 DB에 저장(회원 가입) with JWT
@@ -89,59 +84,16 @@ public class UserService {
         }
 
         if (postLoginReq.getPassword().equals(password)) {
-            Token token = tokenRepository.findTokenByUserId(user.getId()).orElse(null);
-            if (token == null) {
-                JwtResponseDto.TokenInfo tokenInfo = jwtProvider.generateToken(user.getId());
-                token = Token.builder()
+            JwtResponseDto.TokenInfo tokenInfo = jwtProvider.generateToken(user.getId());
+            Token token = Token.builder()
                         .accessToken(tokenInfo.getAccessToken())
                         .refreshToken(tokenInfo.getRefreshToken())
                         .user(user)
                         .build();
-                tokenRepository.save(token);
-            }
 
             return new PostLoginRes(user, token);
         } else {
             throw new BaseException(BaseResponseStatus.PASSWORD_NOT_MATCH);
-        }
-    }
-
-    /**
-     * 로그아웃
-     */
-    @Transactional
-    public String logout(Long userId) throws BaseException {
-        try {
-            if (userId == 0L) { // 로그아웃 요청은 access token이 만료되더라도 재발급할 필요가 없음.
-                User user = tokenRepository.findUserByAccessToken(jwtService.getJwt()).orElse(null);
-                if (user != null) {
-                    Token token = tokenRepository.findTokenByUserId(user.getId()).orElse(null);
-                    tokenRepository.deleteTokenByAccessToken(token.getAccessToken());
-                    return "로그아웃 되었습니다.";
-                }
-
-                else {
-                    throw new BaseException(BaseResponseStatus.INVALID_JWT);
-                }
-            }
-
-            else { // 토큰이 만료되지 않은 경우
-                User logoutUser = utilService.findByUserIdWithValidation(userId);
-                Token token = utilService.findTokenByUserIdWithValidation(logoutUser.getId());
-                String accessToken = token.getAccessToken();
-
-                //엑세스 토큰 남은 유효시간
-                Long expiration = jwtProvider.getExpiration(accessToken);
-
-                //Redis Cache에 저장
-                redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
-
-                //리프레쉬 토큰 삭제
-                tokenRepository.deleteTokenByUserId(logoutUser.getId());
-                return "로그아웃 되었습니다.";
-            }
-        } catch (Exception e) {
-            throw new BaseException(BaseResponseStatus.FAILED_TO_LOGOUT);
         }
     }
 
@@ -284,7 +236,6 @@ public class UserService {
             throw new BaseException(BaseResponseStatus.AGREEMENT_MISMATCH);
         }
         User user = utilService.findByUserIdWithValidation(userId);
-        tokenRepository.deleteTokenByUserId(userId);
         Profile profile = profileRepository.findProfileById(userId).orElse(null);
         if(profile != null) {
             profileService.deleteProfile(profile);

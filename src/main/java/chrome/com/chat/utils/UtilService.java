@@ -3,7 +3,6 @@ package chrome.com.chat.utils;
 import chrome.com.chat.chat_room.ChatRoom;
 import chrome.com.chat.chat_room.ChatRoomRepository;
 import chrome.com.chat.jwt.Token;
-import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponseStatus;
 import chrome.com.chat.user.User;
@@ -20,7 +19,6 @@ import static chrome.com.chat.response.BaseResponseStatus.*;
 public class UtilService {
 
     private final UserRepository userRepository;
-    private final TokenRepository tokenRepository;
     private final ChatRoomRepository chatRoomRepository;
 
     public User findByUserIdWithValidation(Long userId) throws BaseException {
@@ -36,11 +34,6 @@ public class UtilService {
     public User findByEmailWithValidation(String email) throws BaseException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BaseException(POST_USERS_NONE_EXISTS_EMAIL));
-    }
-
-    public Token findTokenByUserIdWithValidation(Long userId) throws BaseException {
-        return tokenRepository.findTokenByUserId(userId)
-                .orElseThrow(() -> new BaseException(INVALID_JWT));
     }
 
     public ChatRoom findChatRoomByChatRoomIdWithValidation(String chatRoomId) throws BaseException {

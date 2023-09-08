@@ -3,6 +3,7 @@ package chrome.com.chat.jwt;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponseStatus;
 import chrome.com.chat.user.User;
+import chrome.com.chat.user.dto.PostReissueReq;
 import chrome.com.chat.utils.Secret;
 import chrome.com.chat.utils.UtilService;
 import io.jsonwebtoken.*;
@@ -16,6 +17,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +26,6 @@ public class JwtService {
     private final JwtProvider jwtProvider;
     private final RedisTemplate redisTemplate;
     private final UtilService utilService;
-    private final TokenRepository tokenRepository;
 
     public String getJwt() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
@@ -54,26 +55,6 @@ public class JwtService {
             User user = utilService.findByUserIdWithValidation(userId);
 
             return userId;
-        } catch (ExpiredJwtException e) {
-            // access token이 만료된 경우
-            User user = tokenRepository.findUserByAccessToken(accessToken).orElse(null);
-            if (user == null) {
-                throw new BaseException(BaseResponseStatus.INVALID_JWT);
-            }
-            // 4. Refresh Token을 사용하여 새로운 Access Token 발급
-            Token token = tokenRepository.findTokenByUserId(user.getId()).orElse(null);
-            String refreshToken = token.getRefreshToken();
-            if (refreshToken != null) {
-                String newAccessToken = refreshAccessToken(user, refreshToken);
-                // 새로운 Access Token으로 업데이트된 JWT를 사용하여 userId 추출
-                Jws<Claims> newClaims = Jwts.parserBuilder()
-                        .setSigningKey(key)
-                        .build()
-                        .parseClaimsJws(newAccessToken);
-                return newClaims.getBody().get("userId", Long.class);
-            } else {
-                throw new BaseException(BaseResponseStatus.EMPTY_JWT);
-            }
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             throw new BaseException(BaseResponseStatus.INVALID_JWT);
         } catch (Exception ignored) {
@@ -86,7 +67,7 @@ public class JwtService {
      */
     // 로그아웃을 시도할 때는 accsee token과 refresh 토큰이 만료되었어도
     // 형식만 유효하다면 토큰 재발급 없이 로그아웃 할 수 있어야 함.
-    public Long getLogoutUserIdx() throws BaseException {
+    public String getLogoutUserIdx() throws BaseException {
 
         // 1. JWT 추출
         String accessToken = getJwt();
@@ -102,11 +83,46 @@ public class JwtService {
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(accessToken);
-            // 3. userId 추출
-            return claims.getBody().get("userId", Long.class);
+            claims.getBody().get("userId", Long.class);
+
+            // access token이 만료되지 않은 경우
+            Long expiration = jwtProvider.getExpiration(accessToken);
+            // access token의 만료 시간을 TTL로 하여 Redis Cache에 저장
+            redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+            return "로그아웃 되었습니다.";
         } catch (ExpiredJwtException e) {
             // access token이 만료된 경우
-            return 0L;
+            return "로그아웃 되었습니다.";
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            throw new BaseException(BaseResponseStatus.INVALID_JWT);
+        } catch (Exception ignored) {
+            throw new BaseException(BaseResponseStatus.INVALID_JWT);
+        }
+    }
+
+    /**
+     * 토큰의 만료 여부를 판별
+     */
+    public Boolean checkExpiration() throws BaseException {
+        // 1. JWT 추출
+        String accessToken = getJwt();
+        if (accessToken == null || accessToken.length() == 0) {
+            throw new BaseException(BaseResponseStatus.EMPTY_JWT);
+        }
+        if (checkBlackToken(accessToken)) {
+            throw new BaseException(BaseResponseStatus.LOG_OUT_USER);
+        }
+        try {
+            // 2. JWT parsing
+            Jws<Claims> claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(accessToken);
+            // 3. userId 추출
+            return false; // 유효
+        } catch (ExpiredJwtException e) {
+            // access token 만료
+            return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             throw new BaseException(BaseResponseStatus.INVALID_JWT);
         } catch (Exception ignored) {
@@ -117,20 +133,20 @@ public class JwtService {
     /**
      * 액세스 토큰 재발급
      */
-    private String refreshAccessToken(User user, String refreshToken) throws BaseException {
+    public String refreshAccessToken(PostReissueReq postReissueReq) throws BaseException {
         try {
+            String refreshToken = postReissueReq.getRefreshToken();
+            String uid = postReissueReq.getUid();
             // 리프레시 토큰이 만료 등의 이유로 유효하지 않은 경우
             if (!jwtProvider.validateToken(refreshToken)) {
                 throw new BaseException(BaseResponseStatus.INVALID_JWT);
             }
             else { // 리프레시 토큰이 유효한 경우
+                User user = utilService.findByUserUidWithValidation(uid);
                 Long userId = user.getId();
                 String refreshedAccessToken = jwtProvider.createToken(userId);
                 // 액세스 토큰 재발급에 성공한 경우
                 if (refreshedAccessToken != null) {
-                    Token token = utilService.findTokenByUserIdWithValidation(userId);
-                    token.updateAccessToken(refreshedAccessToken);
-                    tokenRepository.save(token);
                     return refreshedAccessToken;
                 }
                 throw new BaseException(BaseResponseStatus.FAILED_TO_REFRESH);

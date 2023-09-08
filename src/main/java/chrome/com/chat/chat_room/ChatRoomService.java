@@ -1,7 +1,6 @@
 package chrome.com.chat.chat_room;
 
 import chrome.com.chat.chat_room.dto.GetChatRoomRes;
-import chrome.com.chat.jwt.TokenRepository;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponseStatus;
 import chrome.com.chat.chat_room.dto.AddUserReq;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserChatRoomRepository userChatRoomRepository;
-    private final TokenRepository tokenRepository;
     private final UtilService utilService;
 
     @Transactional

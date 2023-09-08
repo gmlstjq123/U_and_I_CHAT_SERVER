@@ -48,8 +48,7 @@ public class UserController {
     @PostMapping("/log-out") // Redis가 켜져있어야 동작한다.
     public BaseResponse<String> logoutUser() {
         try {
-            Long userId = jwtService.getLogoutUserIdx(); // 토큰 만료 상황에서 로그아웃을 시도하면 0L을 반환
-            return new BaseResponse<>(userService.logout(userId));
+            return new BaseResponse<>(jwtService.getLogoutUserIdx());
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }
@@ -143,6 +142,30 @@ public class UserController {
             Long userId = jwtService.getUserIdx();
             return new BaseResponse<>(userService.deleteUser(userId, agreement));
         } catch(BaseException exception){
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
+     * 액세스 토큰의 만료 여부를 판별
+     */
+    @GetMapping("/check-token")
+    public BaseResponse<Boolean> checkExpiration() {
+        try  {
+            return new BaseResponse<>(jwtService.checkExpiration());
+        } catch (BaseException exception){
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
+     * 리프레시 토큰으로 액세스토큰을 재발급
+     */
+    @PostMapping("/reissue-token")
+    public BaseResponse<String> reissueToken(@RequestBody PostReissueReq postReissueReq) {
+        try  {
+            return new BaseResponse<>(jwtService.refreshAccessToken(postReissueReq));
+        } catch (BaseException exception){
             return new BaseResponse<>(exception.getStatus());
         }
     }
