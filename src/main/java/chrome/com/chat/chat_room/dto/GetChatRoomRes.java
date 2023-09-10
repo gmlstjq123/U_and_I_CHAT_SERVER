@@ -14,5 +14,4 @@ import java.util.Objects;
 public class GetChatRoomRes {
     private String chatRoomId;
     private String roomName;
-    private String userList; // 유저의 이름을 쉼표로 구분
 }

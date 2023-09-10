@@ -98,8 +98,7 @@ public class ChatRoomService {
         List<GetChatRoomRes> getChatRoomRes = userChatRooms.stream()
                 .map(userChatRoom -> {
                     return new GetChatRoomRes(userChatRoom.getChatRoom().getChatRoomId(),
-                            userChatRoom.getChatRoom().getRoomName(),
-                            getNickNameList(userChatRoom.getChatRoom().getChatRoomId()));
+                            userChatRoom.getChatRoom().getRoomName());
                 })
                 .collect(Collectors.toList());
         return getChatRoomRes;

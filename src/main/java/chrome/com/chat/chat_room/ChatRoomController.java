@@ -75,6 +75,16 @@ public class ChatRoomController {
         }
     }
 
+    // 채팅방에 참여한 유저의 닉네임 List를 String으로 반환
+    @GetMapping("/userList/{roomId}")
+    public BaseResponse<String> getUserStrList(@PathVariable String roomId) {
+        try {
+            return new BaseResponse<>(chatRoomService.getNickNameList(roomId));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
     // 채팅방 나가기
     @DeleteMapping("/room/{roomId}")
     public BaseResponse<String> exitChatRoom(@PathVariable String roomId){

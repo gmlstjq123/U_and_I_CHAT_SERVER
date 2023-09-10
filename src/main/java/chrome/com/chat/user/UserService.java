@@ -75,6 +75,7 @@ public class UserService {
     public PostLoginRes login(PostLoginReq postLoginReq) throws BaseException {
         User user = utilService.findByEmailWithValidation(postLoginReq.getEmail());
         user.setUid(postLoginReq.getUid());
+        userRepository.save(user);
 
         String password;
         try {
