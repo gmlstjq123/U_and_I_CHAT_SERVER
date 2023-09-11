@@ -71,6 +71,19 @@ public class ChatRoomService {
         return result;
     }
 
+    // 채팅에 참여한 유저의 디바이스 토큰 목록 반환
+    public List<String> getTokenList(String chatRoomId) throws BaseException {
+        utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
+        List<UserChatRoom> userChatRooms = userChatRoomRepository.findUserChatRoomByRoomId(chatRoomId);
+
+        List<String> tokenList = userChatRooms.stream()
+                .map(userChatRoom -> userChatRoom.getUser().getDeviceToken())
+                .filter(token -> token != null) // Filter out null tokens
+                .collect(Collectors.toList());
+
+        return tokenList;
+    }
+
     public List<GetUserRes> getUserListById(String chatRoomId) throws BaseException {
         utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
         List<UserChatRoom> userChatRooms = userChatRoomRepository.findUserChatRoomByRoomId(chatRoomId);

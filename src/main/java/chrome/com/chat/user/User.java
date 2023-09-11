@@ -31,8 +31,8 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Token token; // jwt 토큰과 일대일 매핑
+    @Column(nullable = true)
+    private String deviceToken;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile; // 프로필 사진과 일대일 매핑
@@ -42,6 +42,7 @@ public class User extends BaseTimeEntity {
         this.email = email;
         this.password = password;
         this.uid = uid;
+        this.deviceToken = null;
         return this;
     }
 }

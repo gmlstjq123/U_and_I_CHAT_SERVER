@@ -43,6 +43,18 @@ public class UserController {
     }
 
     /**
+     * 디바이스 토큰 저장
+     */
+    @PostMapping("/device-token")
+    public BaseResponse<String> saveDeviceToken(@RequestBody PostDeviceTokenReq postDeviceTokenReq) {
+        try {
+            return new BaseResponse<>(userService.saveDeviceToken(postDeviceTokenReq));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
      * 로그아웃
      */
     @PostMapping("/log-out") // Redis가 켜져있어야 동작한다.

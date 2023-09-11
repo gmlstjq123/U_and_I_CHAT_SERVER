@@ -85,6 +85,16 @@ public class ChatRoomController {
         }
     }
 
+    // 채팅에 참여한 유저의 디바이스 토큰 목록 반환
+    @GetMapping("/tokenList/{roomId}")
+    public BaseResponse<List<String>> getTokenList(@PathVariable String roomId) {
+        try {
+            return new BaseResponse<>(chatRoomService.getTokenList(roomId));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
     // 채팅방 나가기
     @DeleteMapping("/room/{roomId}")
     public BaseResponse<String> exitChatRoom(@PathVariable String roomId){

@@ -99,6 +99,17 @@ public class UserService {
     }
 
     /**
+     * 디바이스 토큰 저장
+     */
+    public String saveDeviceToken(PostDeviceTokenReq postDeviceTokenReq) throws BaseException {
+        User user = utilService.findByUserUidWithValidation(postDeviceTokenReq.getUid());
+        user.setDeviceToken(postDeviceTokenReq.getDeviceToken());
+        userRepository.save(user);
+
+        return "디바이스 토큰이 저장되었습니다.";
+    }
+
+    /**
      * 유저 정보 반환
      */
     public GetUserRes getUserInfo(String uid) throws BaseException {
