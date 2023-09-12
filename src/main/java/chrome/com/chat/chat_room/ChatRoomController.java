@@ -54,6 +54,16 @@ public class ChatRoomController {
         }
     }
 
+    // 채팅에 참여한 유저의 UID 리스트 반환
+    @GetMapping("/uidList/{roomId}")
+    public BaseResponse<List<String>> getUserUidList(@PathVariable String roomId) {
+        try {
+            return new BaseResponse<>(chatRoomService.getUserUidListById(roomId));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
     // 친구 초대
     @PostMapping("/room/add")
     public BaseResponse<String> AddUser(@RequestBody AddUserReq addUserReq) {

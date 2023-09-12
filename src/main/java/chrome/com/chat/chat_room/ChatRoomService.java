@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -103,6 +104,16 @@ public class ChatRoomService {
                 })
                 .collect(Collectors.toList());
         return getUserRes;
+    }
+
+    public List<String> getUserUidListById(String chatRoomId) throws BaseException {
+        utilService.findChatRoomByChatRoomIdWithValidation(chatRoomId);
+        List<UserChatRoom> userChatRooms = userChatRoomRepository.findUserChatRoomByRoomId(chatRoomId);
+        List<String> uidList = new ArrayList<>();
+        for (UserChatRoom userChatRoom : userChatRooms) {
+            uidList.add(userChatRoom.getUser().getUid());
+        }
+        return uidList;
     }
 
     public String getUserCount(String chatRoomId) throws BaseException {
