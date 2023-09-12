@@ -55,6 +55,18 @@ public class UserController {
     }
 
     /**
+     * uid에 해당하는 유저의 디바이스 토큰 반환
+     */
+    @GetMapping("/uidToToken")
+    public BaseResponse<String> getDeviceTokenByUid(@RequestParam String uid) {
+        try {
+            return new BaseResponse<>(userService.getDeviceTokenByUid(uid));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    /**
      * 로그아웃
      */
     @PostMapping("/log-out") // Redis가 켜져있어야 동작한다.

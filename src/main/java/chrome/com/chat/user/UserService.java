@@ -110,6 +110,14 @@ public class UserService {
     }
 
     /**
+     * uid에 해당하는 유저의 디바이스 토큰 반환
+     */
+    public String getDeviceTokenByUid(String uid) throws BaseException {
+        User user = utilService.findByUserUidWithValidation(uid);
+        return user.getDeviceToken();
+    }
+
+    /**
      * 유저 정보 반환
      */
     public GetUserRes getUserInfo(String uid) throws BaseException {
