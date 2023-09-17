@@ -100,9 +100,7 @@ public class KakaoService {
             // 이메일 정보 가져오기
             email = (String) ((Map<?, ?>) (data.get("kakao_account"))).get("email");
         }
-        if(userRepository.findByEmailCount(email) >= 1 && email != "") {
-            throw new BaseException(BaseResponseStatus.POST_USERS_EXISTS_EMAIL);
-        }
+
         // 닉네임 동의 여부 확인
         boolean nickNameAgreement = (boolean) ((Map<?, ?>) (data.get("kakao_account"))).get("profile_nickname_needs_agreement");
         String nickName;
