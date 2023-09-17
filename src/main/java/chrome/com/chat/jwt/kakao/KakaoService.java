@@ -4,6 +4,7 @@ import chrome.com.chat.jwt.JwtProvider;
 import chrome.com.chat.jwt.Token;
 import chrome.com.chat.jwt.dto.JwtResponseDto;
 import chrome.com.chat.jwt.kakao.dto.GetKakaoUserRes;
+import chrome.com.chat.jwt.kakao.dto.PostKakaoLoginRes;
 import chrome.com.chat.jwt.kakao.dto.PostKakaoUserReq;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponse;
@@ -39,7 +40,7 @@ public class KakaoService {
     /**
      * 카카오 콜백 메서드
      */
-    public PostLoginRes kakaoCallBack(String accessToken) throws BaseException {
+    public PostKakaoLoginRes kakaoCallBack(String accessToken) throws BaseException {
         GetKakaoUserRes getKakaoUserRes = getUserInfo(accessToken);
         String email = getKakaoUserRes.getEmail();
         String nickName = getKakaoUserRes.getNickName();
@@ -50,12 +51,12 @@ public class KakaoService {
             kakaoUser.createUser(nickName, email, null, null);
             userRepository.save(kakaoUser);
             tokenInfo = jwtProvider.generateToken(kakaoUser.getId());
-            return new PostLoginRes(kakaoUser.getId(), tokenInfo.getAccessToken(), tokenInfo.getRefreshToken());
+            return new PostKakaoLoginRes(kakaoUser.getId(), kakaoUser.getEmail(), tokenInfo.getAccessToken(), tokenInfo.getRefreshToken());
         }
         else { // 기존 회원이 로그인하는 경우
             User user = findUser.get();
             tokenInfo = jwtProvider.generateToken(user.getId());
-            return new PostLoginRes(user.getId(), tokenInfo.getAccessToken(), tokenInfo.getRefreshToken());
+            return new PostKakaoLoginRes(user.getId(), user.getEmail(), tokenInfo.getAccessToken(), tokenInfo.getRefreshToken());
         }
 
     }

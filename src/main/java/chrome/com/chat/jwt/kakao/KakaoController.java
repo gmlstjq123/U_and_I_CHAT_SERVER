@@ -2,6 +2,7 @@ package chrome.com.chat.jwt.kakao;
 
 import chrome.com.chat.jwt.JwtService;
 import chrome.com.chat.jwt.dto.JwtResponseDto;
+import chrome.com.chat.jwt.kakao.dto.PostKakaoLoginRes;
 import chrome.com.chat.jwt.kakao.dto.PostKakaoUserReq;
 import chrome.com.chat.response.BaseException;
 import chrome.com.chat.response.BaseResponse;
@@ -22,7 +23,7 @@ public class KakaoController {
      */
     @ResponseBody
     @PostMapping("/oauth/kakao")
-    public BaseResponse<PostLoginRes> kakaoCallback(@RequestParam("token") String accessToken) {
+    public BaseResponse<PostKakaoLoginRes> kakaoCallback(@RequestParam("token") String accessToken) {
         try {
             return new BaseResponse<>(kakaoService.kakaoCallBack(accessToken));
         } catch (BaseException exception) {
