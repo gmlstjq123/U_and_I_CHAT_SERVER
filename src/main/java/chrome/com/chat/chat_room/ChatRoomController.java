@@ -9,6 +9,7 @@ import chrome.com.chat.user.dto.GetUserRes;
 import chrome.com.chat.utils.UtilService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -112,6 +113,16 @@ public class ChatRoomController {
         try {
             Long userId = jwtService.getUserIdx();
             return new BaseResponse<>(chatRoomService.exitChatRoom(userId, roomId));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    // 이미지 S3 업로드
+    @PostMapping("/image")
+    public BaseResponse<String> uploadImage(@RequestPart(value = "image", required = false) MultipartFile multipartFile) {
+        try {
+            return new BaseResponse<>(chatRoomService.uploadImage(multipartFile));
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }

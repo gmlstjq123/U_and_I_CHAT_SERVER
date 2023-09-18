@@ -6,12 +6,16 @@ import chrome.com.chat.response.BaseResponseStatus;
 import chrome.com.chat.chat_room.dto.AddUserReq;
 import chrome.com.chat.user.User;
 import chrome.com.chat.user.dto.GetUserRes;
+import chrome.com.chat.user.profile.Profile;
+import chrome.com.chat.user.profile.dto.GetS3Res;
 import chrome.com.chat.user_chat_room.UserChatRoom;
 import chrome.com.chat.user_chat_room.UserChatRoomRepository;
+import chrome.com.chat.utils.S3Service;
 import chrome.com.chat.utils.UtilService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +31,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserChatRoomRepository userChatRoomRepository;
     private final UtilService utilService;
+    private final S3Service s3Service;
 
     @Transactional
     public String createChatRoom(Long userId, String roomName) throws BaseException {
@@ -166,6 +171,19 @@ public class ChatRoomService {
             userChatRoomRepository.save(userChatRoom);
             plusUserCount(addUserReq.getRoomId());
             return user.getNickName();
+        } catch (BaseException exception) {
+            throw new BaseException(exception.getStatus());
+        }
+    }
+
+    @Transactional
+    public String uploadImage(MultipartFile multipartFile) throws BaseException {
+        try {
+            if(multipartFile == null) {
+                throw new BaseException(BaseResponseStatus.REQUEST_ERROR);
+            }
+            GetS3Res getS3Res = s3Service.uploadSingleFile(multipartFile);
+            return getS3Res.getImgUrl();
         } catch (BaseException exception) {
             throw new BaseException(exception.getStatus());
         }
