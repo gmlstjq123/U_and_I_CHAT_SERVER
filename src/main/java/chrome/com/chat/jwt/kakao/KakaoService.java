@@ -58,7 +58,6 @@ public class KakaoService {
             tokenInfo = jwtProvider.generateToken(user.getId());
             return new PostKakaoLoginRes(user.getId(), user.getEmail(), tokenInfo.getAccessToken(), tokenInfo.getRefreshToken());
         }
-
     }
 
     /**
